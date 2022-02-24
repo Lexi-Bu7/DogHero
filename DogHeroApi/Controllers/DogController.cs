@@ -2,6 +2,7 @@
 using DogHeroApi.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace DogHeroApi.Controllers
 {
@@ -9,90 +10,72 @@ namespace DogHeroApi.Controllers
     [ApiController]
     public class DogController : ControllerBase
     {
-        private readonly DataContext context;
+        private readonly DataContext _context;
 
         public DogController(DataContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
-        public static List<Dog> Dogs()
-        {
-
-            var dogs = new List<Dog>
-            {
-                new Dog
-                {
-                Id = 1, Name = "Fawn", Age = 4, Gender =Gender.Female, Weight = 21.98, Breeder = "Welsh Corgi"
-                },
-                new Dog
-                {
-                Id = 2, Name = "Buck", Age = 23, Gender =Gender.Male, Weight = 200, Breeder = "American Deer"
-                }
-            };
-            return dogs;
-        }
 
         [HttpGet]
         public async Task<ActionResult<List<Dog>>> GetDogs()
         {
-            return Ok(Dogs());
+            return await _context.Dogs.ToListAsync();
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<List<Dog>>> GetDog(int id)
+        public async Task<ActionResult<Dog>> GetDog(int id)
         {
-            var dog = Dogs().Find(x => x.Id == id);
-
-            if (dog == null)
-            {
-                return BadRequest(dog);
-            }
-            return Ok(dog);
+           
+            return await _context.Dogs.FindAsync(id);   
         }
 
         [HttpPost]
         public async Task<ActionResult<Dog>> AddDog(Dog dog)
         {
-            var dogs = Dogs();
-            dogs.Add(dog);
-            return Ok(dogs);
+            _context.Dogs.Add(dog);
+            await _context.SaveChangesAsync();  
+            return NoContent();
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<List<Dog>>> EditeDogs(int id, Dog dogDTO)
+        public async Task<ActionResult<Dog>> EditeDogs(int id, Dog dogDTO)
         {
 
             if(id != dogDTO.Id)
             {
                 return BadRequest("can't find the dog matches id");
             }
-            
-            var dogs = Dogs();
-            var dog = dogs.Find(x => x.Id == id);
 
+            var dog = await _context.Dogs.FindAsync(id);
             if (dog == null)
             {
                 return NotFound();
-            } 
+            }
+            
             dog.Name = dogDTO.Name; 
-            dog.Age= dogDTO.Age;    
-            return Ok(dogs);
+            dog.Age = dogDTO.Age;   
+            dog.Breeder = dogDTO.Breeder;   
+
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
 
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<List<Dog>>> DeleteDog(int id)
+        public async Task<ActionResult<Dog>> DeleteDog(int id)
         {
-            var dogs = Dogs();
-            var dog = dogs.Find(x => x.Id == id);
-
+            var dog = await _context.Dogs.FindAsync(id);
             if (dog == null)
             {
-                return NotFound("Hero not Found");
+                return NotFound();
             }
-            dogs.Remove(dog);
-            return Ok(dogs);
+
+            _context.Dogs.Remove(dog);  
+            await _context.SaveChangesAsync();
+            return NoContent();
+
         }
 
     }
