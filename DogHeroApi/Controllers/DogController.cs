@@ -1,4 +1,5 @@
 ﻿using DogHeroApi.Module;
+using DogHeroApi.Persistence;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,13 @@ namespace DogHeroApi.Controllers
     [ApiController]
     public class DogController : ControllerBase
     {
+        private readonly DataContext context;
+
+        public DogController(DataContext context)
+        {
+            this.context = context;
+        }
+
         public static List<Dog> Dogs()
         {
 
